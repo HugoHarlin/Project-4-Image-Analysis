@@ -35,21 +35,20 @@ if K.backend()=='tensorflow':
 # into the model the weight values of its best performing epoch.
     
 def getModel(data):
-    print("test")
     num_classes = 10
     cNN = Sequential()
-    cNN.add(Conv2D(32, kernel_size=(3, 3), activation='relu', input_shape=(32,32,3)))
+    cNN.add(Conv2D(32, kernel_size=(3, 3), activation='relu', input_shape=(3,32,32), padding ="same"))
     cNN.add(Dropout(0.5))
     
     cNN.add(Conv2D(32, kernel_size=(3, 3), activation='relu'))
-    cNN.add(MaxPooling2D(pool_size=(2, 2), dim_ordering="th"))
+    cNN.add(MaxPooling2D(pool_size=(2, 2)))
     cNN.add(Dropout(0.25))
     
     cNN.add(Conv2D(64, kernel_size=(3, 3), activation='relu'))
     cNN.add(Dropout(0.5))
     
-    cNN.add(Conv2D(64, (3, 3), activation='relu'))
-    cNN.add(MaxPooling2D(pool_size=(2, 2), dim_ordering="th"))
+    cNN.add(Conv2D(64, kernel_size=(3, 3), activation='relu'))
+    cNN.add(MaxPooling2D(pool_size=(2, 2)))
     cNN.add(Dropout(0.5))
     cNN.add(Flatten())
     
@@ -62,10 +61,11 @@ def getModel(data):
     return cNN
     
 def fitModel(cNN,data):
-    model_checkpoint = ModelCheckpoint("weights-best.hdf5", monitor='val_loss', verbose=0, save_best_only=True, save_weights_only=True, mode='auto', period=1)
-    early_stopping = EarlyStopping(monitor='val_loss', min_delta=0, patience=20, verbose=0, mode='auto', baseline=None, restore_best_weights=False)
-    trained_cNN = cNN.fit(data.x_train, data.y_train, labels = data.class_names, epochs = 100, batch_size = 100, validation_data = (data.x_test, data.y_test), callbacks = [model_checkpoint, early_stopping])
-    return trained_cNN
+    model_checkpoint = ModelCheckpoint(filepath = "C:/Users/Bulb/Documents/Teknisk Fysik/AI/Project-4-Image-Analysis/weights-best.hdf5", monitor='val_loss', verbose=0, save_best_only=True, save_weights_only=True, mode='auto', period=1)
+    early_stopping = EarlyStopping(monitor='val_loss', min_delta=0, patience=20, verbose=0, mode='auto', baseline=None)
+    cNN.fit(data.x_train, data.y_train, epochs = 1, batch_size = 1000, validation_data = (data.x_test, data.y_test),callbacks = [model_checkpoint, early_stopping])
+    cNN.load_weights("C:/Users/Bulb/Documents/Teknisk Fysik/AI/Project-4-Image-Analysis/weights-best.hdf5")
+    return cNN
     
 def runImageClassification(getModel=None,fitModel=None,seed=7):
     # Fetch data. You may need to be connected to the internet the first time this is done.
@@ -86,7 +86,7 @@ def runImageClassification(getModel=None,fitModel=None,seed=7):
     # Evaluate on test data
     print("Evaluating model...")
     score = model.evaluate(data.x_test, data.y_test, verbose=0)
-    print('Test accuracy:', score[1])
+    print('Test accuracy:', score)
 
 # This is the class that wraps the CIFAR data. You will probably need to be connected to the
 # internet the first time you create an object of this class, as the data will be downloaded.
