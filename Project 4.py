@@ -13,6 +13,9 @@ from keras import backend as K
 from keras.models import Sequential
 from keras.layers import Dense, Dropout, Flatten
 from keras.layers import Conv2D, MaxPooling2D
+from keras.callbacks import ModelCheckpoint
+from keras.callbacks import EarlyStopping
+from keras import optimizers
 # Here we just make sure the image format is as desired. This will make the feature (x)
 # data - i.e. the RGB pixel values - for each image have the shape 3x32x32.
 if K.backend()=='tensorflow':
@@ -33,10 +36,36 @@ if K.backend()=='tensorflow':
     
 def getModel(data):
     print("test")
+    num_classes = 10
     cNN = Sequential()
+    cNN.add(Conv2D(32, kernel_size=(3, 3), activation='relu', input_shape=(32,32,3)))
+    cNN.add(Dropout(0.5))
     
+    cNN.add(Conv2D(32, kernel_size=(3, 3), activation='relu'))
+    cNN.add(MaxPooling2D(pool_size=(2, 2), dim_ordering="th"))
+    cNN.add(Dropout(0.25))
+    
+    cNN.add(Conv2D(64, kernel_size=(3, 3), activation='relu'))
+    cNN.add(Dropout(0.5))
+    
+    cNN.add(Conv2D(64, (3, 3), activation='relu'))
+    cNN.add(MaxPooling2D(pool_size=(2, 2), dim_ordering="th"))
+    cNN.add(Dropout(0.5))
+    cNN.add(Flatten())
+    
+    cNN.add(Dense(128, activation='relu'))
+    cNN.add(Dropout(0.5))
+    cNN.add(Dense(num_classes, activation='softmax'))
+    
+    sgd = optimizers.SGD(lr=0.1, decay=1e-6)
+    cNN.compile(loss = "mean_squared_error", optimizer = sgd)
     return cNN
     
+def fitModel(cNN,data):
+    model_checkpoint = ModelCheckpoint("weights-best.hdf5", monitor='val_loss', verbose=0, save_best_only=True, save_weights_only=True, mode='auto', period=1)
+    early_stopping = EarlyStopping(monitor='val_loss', min_delta=0, patience=20, verbose=0, mode='auto', baseline=None, restore_best_weights=False)
+    trained_cNN = cNN.fit(data.x_train, data.y_train, labels = data.class_names, epochs = 100, batch_size = 100, validation_data = (data.x_test, data.y_test), callbacks = [model_checkpoint, early_stopping])
+    return trained_cNN
     
 def runImageClassification(getModel=None,fitModel=None,seed=7):
     # Fetch data. You may need to be connected to the internet the first time this is done.
